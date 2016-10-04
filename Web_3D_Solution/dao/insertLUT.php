@@ -1,5 +1,5 @@
 <?php
-
+$errMsg = '';
 include('config2.php');
 
 
@@ -24,51 +24,61 @@ if ($tables == "Texture1")
 	$textstatus = $_POST ["textstatus"];
 	$texcomments = $_POST ["texcomments"];
 
-	$sql_insert_comment = "INSERT INTO next_texture_lookup_table(Texture_Item_No,Texture_Name,Texture_Color,StdWrapCode,AltWrapCode1,
-	AltWrapCode2,AltWrapCode3,FabricDesign,MaterialType,Status,Season,Category,AddedBy) VALUES
-	(
-	'$texitemno','$texname','$texcolor','$textwrapcode','$textwrapcode1','$textwrapcode2','$textwrapcode3'
-	,'$texfabdeg','$texmd','$textstatus','$textseson','$textcat','$personId_session')";
+	$dup_qry = "SELECT COUNT(id) as Texture1RecExists FROM next_texture_lookup_table WHERE Texture_Item_No='$texitemno'";
+	$dup_qry = mysqli_query($db, $dup_qry);
+	$dup_qry_row = mysqli_fetch_array($dup_qry, MYSQLI_ASSOC);
+	$texture1RecExists = $dup_qry_row["Texture1RecExists"];
 
-	if (mysqli_query($db, $sql_insert_comment))
-	{
-		echo "Texture 1 data succesfully inserted. Redirecting to Texture 1 Data Add page in 3 secs...";
-		$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
-		error_log($timelog . " => Success: [] Texture 1 data successfully created by [$login_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
-		error_log($sql_insert_comment . "\n", 3, "../log/Transaction.log");
-		header("refresh:3;url=../view/viewtexture1.php");
+	if($texture1RecExists == 0){
+
+		$sql_insert_comment = "INSERT INTO next_texture_lookup_table(Texture_Item_No,Texture_Name,Texture_Color,StdWrapCode,AltWrapCode1,
+		AltWrapCode2,AltWrapCode3,FabricDesign,MaterialType,Status,Season,Category,AddedBy) VALUES
+		(
+		'$texitemno','$texname','$texcolor','$textwrapcode','$textwrapcode1','$textwrapcode2','$textwrapcode3'
+		,'$texfabdeg','$texmd','$textstatus','$textseson','$textcat','$personId_session')";
+
+		if (mysqli_query($db, $sql_insert_comment))
+		{
+			$errMsg = "Texture 1 data succesfully inserted.";
+			$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
+			error_log($timelog . " => Success: [] Texture 1 data successfully created by [$login_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
+			error_log($sql_insert_comment . "\n", 3, "../log/Transaction.log");
+		} else
+		{
+			$errMsg = "Texture 1 data not succesfully inserted.";
+			$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
+			error_log($timelog . " => Error: [] Texture 1 data Error uploaded by [$personId_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
+			error_log($sql_insert_comment . "\n", 3, "../log/Transaction.log");
+		}
+
+
+
+		//echo $id_texture1;
+
+		$newid = "TexO" . $id_texture1;
+		//echo $newid;
+		$sql_insert_comment1 = "INSERT INTO next_trans_cmtt_table(Comments,TransId,CommentedBy) VALUES ('$texcomments','$newid',$personId_session)";
+		if (mysqli_query($db, $sql_insert_comment1))
+		{
+			$errMsg .= " Comments succesfully inserted.";
+			$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
+			error_log($timelog . " => Success: [] comments successfully created by [$login_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
+			error_log($sql_insert_comment1 . "\n", 3, "../log/Transaction.log");
+		} else
+		{
+			$errMsg .= " Comments not succesfully inserted.";
+			$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
+			error_log($timelog . " => Error: [] comments Error uploaded by [$personId_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
+			error_log($sql_insert_comment1 . "\n", 3, "../log/Transaction.log");
+		}
 	} else
 	{
-		echo "Texture 1 data not succesfully inserted. Redirecting to Master Data Add page in 3 secs...";
+		$errMsg = "Texture 1 data not succesfully inserted. Record already Exists.";
 		$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
 		error_log($timelog . " => Error: [] Texture 1 data Error uploaded by [$personId_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
 		error_log($sql_insert_comment . "\n", 3, "../log/Transaction.log");
-		header("refresh:3;url=../view/viewtexture1.php");
 	}
-
-
-	$sql_id = mysqli_query($db, " select id from next_texture_lookup_table ORDER BY dateadded DESC LIMIT 1");
-	$row_id = mysqli_fetch_array($sql_id, MYSQLI_ASSOC);
-	$id_texture1 = $row_id['id'];
-
-//echo $id_texture1;
-
-	$newid = "TexO" . $id_texture1;
-//echo $newid;
-	$sql_insert_comment1 = "INSERT INTO next_trans_cmtt_table(Comments,TransId,CommentedBy) VALUES ('$texcomments','$newid',$personId_session)";
-	if (mysqli_query($db, $sql_insert_comment1))
-	{
-		echo "Comments succesfully inserted.";
-		$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
-		error_log($timelog . " => Success: [] comments successfully created by [$login_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
-		error_log($sql_insert_comment1 . "\n", 3, "../log/Transaction.log");
-	} else
-	{
-		echo "Comments not succesfully inserted.";
-		$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
-		error_log($timelog . " => Error: [] comments Error uploaded by [$personId_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
-		error_log($sql_insert_comment1 . "\n", 3, "../log/Transaction.log");
-	}
+	header("location:../view/viewtexture1.php?msg=".trim(base64_encode($errMsg)));
 }
 
 if ($tables == "Texture2")
@@ -80,56 +90,65 @@ if ($tables == "Texture2")
 	$textstatus = $_POST ["textstatus2"];
 	$texcomments = trim(addslashes($_POST ["texcomments2"]));
 
-	$sql_insert_comment = "INSERT INTO next_texturesec_lookup_table(Texture_Color,Status,Season,Category,AddedBy) VALUES
-	('$texcolor','$textstatus','$textseson','$textcat','$personId_session')";
+	$dup_qry = "SELECT COUNT(id) as texture2RecExists FROM next_texturesec_lookup_table WHERE Texture_Color='$texcolor'";
+	$dup_qry = mysqli_query($db, $dup_qry);
+	$dup_qry_row = mysqli_fetch_array($dup_qry, MYSQLI_ASSOC);
+	$texture2RecExists = $dup_qry_row["texture2RecExists"];
 
-	if (mysqli_query($db, $sql_insert_comment))
-	{
-		$sql_id = mysqli_query($db, " select id from next_texturesec_lookup_table ORDER BY dateadded DESC LIMIT 1");
-		$row_id = mysqli_fetch_array($sql_id, MYSQLI_ASSOC);
-		$id_texture1 = $row_id['id'];
+	if($texture2RecExists == 0){
+		$sql_insert_comment = "INSERT INTO next_texturesec_lookup_table(Texture_Color,Status,Season,Category,AddedBy) VALUES
+		('$texcolor','$textstatus','$textseson','$textcat','$personId_session')";
 
-		$strtest = "TIN2-" . str_pad($id_texture1, 3, "0", STR_PAD_LEFT);
-		$upd_qry = "update next_texturesec_lookup_table set Texture_Item_No='$strtest' where id=$id_texture1";
-		mysqli_query($db, $upd_qry);
-		
-		echo "Texture 2 data succesfully inserted. Redirecting to Texture 2 Data Add page in 3 secs...";
-		$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
-		error_log($timelog . " => Success: [] Texture 2 data successfully created by [$login_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
-		error_log($sql_insert_comment . "\n", 3, "../log/Transaction.log");
-		header("refresh:3;url=../view/viewtexture2.php");
-	} else
-	{
-		echo "Texture 2 data not succesfully inserted. Redirecting to Texture 2 Add page in 3 secs...";
-		$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
-		error_log($timelog . " => Error: [] Texture 2 data Error uploaded by [$personId_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
-		error_log($sql_insert_comment . "\n", 3, "../log/Transaction.log");
-		header("refresh:3;url=../view/viewtexture2.php");
-	}
-
-
-
-	//echo $id_texture1;
-
-	if ($texcomments)
-	{
-		$newid = "TexS" . $id_texture1;
-		//echo $newid;
-		$sql_insert_comment1 = "INSERT INTO next_trans_cmtt_table(Comments,TransId,CommentedBy) VALUES ('$texcomments','$newid',$personId_session)";
-		if (mysqli_query($db, $sql_insert_comment1))
+		if (mysqli_query($db, $sql_insert_comment))
 		{
-			echo "Comments succesfully inserted.";
+			$sql_id = mysqli_query($db, " select id from next_texturesec_lookup_table ORDER BY dateadded DESC LIMIT 1");
+			$row_id = mysqli_fetch_array($sql_id, MYSQLI_ASSOC);
+			$id_texture1 = $row_id['id'];
+
+			$strtest = "TIN2-" . str_pad($id_texture1, 3, "0", STR_PAD_LEFT);
+			$upd_qry = "update next_texturesec_lookup_table set Texture_Item_No='$strtest' where id=$id_texture1";
+			mysqli_query($db, $upd_qry);
+			
+			$errMsg = "Texture 2 data succesfully inserted.";
 			$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
-			error_log($timelog . " => Success: [] comments successfully created by [$login_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
-			error_log($sql_insert_comment1 . "\n", 3, "../log/Transaction.log");
+			error_log($timelog . " => Success: [] Texture 2 data successfully created by [$login_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
+			error_log($sql_insert_comment . "\n", 3, "../log/Transaction.log");
 		} else
 		{
-			echo "Comments not succesfully inserted.";
+			$errMsg = "Texture 2 data not succesfully inserted.";
 			$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
-			error_log($timelog . " => Error: [] comments Error uploaded by [$personId_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
-			error_log($sql_insert_comment1 . "\n", 3, "../log/Transaction.log");
+			error_log($timelog . " => Error: [] Texture 2 data Error uploaded by [$personId_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
+			error_log($sql_insert_comment . "\n", 3, "../log/Transaction.log");
 		}
+
+		//echo $id_texture1;
+
+		if ($texcomments)
+		{
+			$newid = "TexS" . $id_texture1;
+			//echo $newid;
+			$sql_insert_comment1 = "INSERT INTO next_trans_cmtt_table(Comments,TransId,CommentedBy) VALUES ('$texcomments','$newid',$personId_session)";
+			if (mysqli_query($db, $sql_insert_comment1))
+			{
+				$errMsg .= "  Comments succesfully inserted.";
+				$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
+				error_log($timelog . " => Success: [] comments successfully created by [$login_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
+				error_log($sql_insert_comment1 . "\n", 3, "../log/Transaction.log");
+			} else
+			{
+				$errMsg .= "Comments not succesfully inserted.";
+				$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
+				error_log($timelog . " => Error: [] comments Error uploaded by [$personId_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
+				error_log($sql_insert_comment1 . "\n", 3, "../log/Transaction.log");
+			}
+		}
+	} else {
+		$errMsg = "Texture 2 data not succesfully inserted. Record already Exists.";
+		$id = str_pad($personId_session, 5, "0", STR_PAD_LEFT);
+		error_log($timelog . " => Error: [] Texture 1 data Error uploaded by [$personId_session - System Profile Id ($id)]\n", 3, "../log/Transaction.log");
+		error_log($sql_insert_comment . "\n", 3, "../log/Transaction.log");
 	}
+	header("location:../view/viewtexture2.php?msg=".trim(base64_encode($errMsg)));
 }
 
 if ($tables == "Option")

@@ -7,8 +7,19 @@ if ($hostname == "SELVAMEENAK5C3E")
 {
 	$proj_path = "..";
 }
+?>
 
-include('header.php');
+<?php  if(!empty($_REQUEST) && $_REQUEST['msg'] != ''){ ?>
+<div class="alert alert-info ">
+	<a href="#" class="close" data-dismiss="alert">&times;</a>
+	<strong>Message : </strong><?php echo trim(base64_decode($_REQUEST['msg'])); ?>
+</div>
+<?php } ?>
+
+
+<?php
+
+include('header.php'); 
 
 $del_id = trim(addslashes(filter_input(INPUT_POST, 'del_id')));
 $process = trim(addslashes(filter_input(INPUT_POST, 'process')));
