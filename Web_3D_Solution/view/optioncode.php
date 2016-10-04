@@ -104,29 +104,42 @@ if ($process == "insert_row")
 	{
 		$camera_count = $camera_count+1;
 	}
-	$sql_insert_comment = "INSERT INTO next_option_lookup_table(Category,State,WrapCode_Option,AngleSet,Description,Main,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14, _15, AddedBy,camera_count) "
-			. "VALUES('$opcat','$optionstate','$optionwrap','$optionangel','$optiondesc','$_maincangle','$_onecangle','$_twocangle','$_threecangle','$_fourcangle','$_fivecangle','$_sixcangle','$_sevencangle','$_eightcangle','$_ninecangle','$_tencangle','$_elevencangle','$_twelvecangle','$_thirteencangle','$_forteencangle','$_fifteencangle','$personId_session',$camera_count)";
 
-	mysqli_query($db, $sql_insert_comment);
+	$dup_qry = "SELECT COUNT(id) as text1 FROM next_option_lookup_table WHERE Description='$optiondesc' and State=$optionstate and AngleSet=$optionangel";
+	$dup_qry = mysqli_query($db, $dup_qry);
+	$dup_qry_row = mysqli_fetch_array($dup_qry, MYSQLI_ASSOC);
+	$text1_count = $dup_qry_row["text1"];
 
-	$sql_id = mysqli_query($db, " select id from next_option_lookup_table ORDER BY dateadded DESC LIMIT 1");
-	$row_id = mysqli_fetch_array($sql_id, MYSQLI_ASSOC);
-	$id_texture1 = $row_id['id'];
+	if($text1_count == 0){
+		$sql_insert_comment = "INSERT INTO next_option_lookup_table(Category,State,WrapCode_Option,AngleSet,Description,Main,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14, _15, AddedBy,camera_count) "
+				. "VALUES('$opcat','$optionstate','$optionwrap','$optionangel','$optiondesc','$_maincangle','$_onecangle','$_twocangle','$_threecangle','$_fourcangle','$_fivecangle','$_sixcangle','$_sevencangle','$_eightcangle','$_ninecangle','$_tencangle','$_elevencangle','$_twelvecangle','$_thirteencangle','$_forteencangle','$_fifteencangle','$personId_session',$camera_count)";
 
-	$strtest = "S" . str_pad($id_texture1, 3, "0", STR_PAD_LEFT);
-	$upd_qry = "update next_option_lookup_table set option_sgkid='$strtest' where id=$id_texture1";
-	mysqli_query($db, $upd_qry);
+		mysqli_query($db, $sql_insert_comment);
 
-	//echo $id_texture1;
-	if ($optcomments != "")
-	{
-		$newid = "OptC" . $id_texture1;
-		$sql_insert_comment1 = "INSERT INTO next_trans_cmtt_table(Comments,TransId,CommentedBy) VALUES ('$optcomments	','$newid',$personId_session)";
-		mysqli_query($db, $sql_insert_comment1);
-	}
-	echo "<div class='alert alert-success'>
-			<strong>$optiondesc</strong> Successfully Added!!!.
+		$sql_id = mysqli_query($db, " select id from next_option_lookup_table ORDER BY dateadded DESC LIMIT 1");
+		$row_id = mysqli_fetch_array($sql_id, MYSQLI_ASSOC);
+		$id_texture1 = $row_id['id'];
+
+		$strtest = "S" . str_pad($id_texture1, 3, "0", STR_PAD_LEFT);
+		$upd_qry = "update next_option_lookup_table set option_sgkid='$strtest' where id=$id_texture1";
+		mysqli_query($db, $upd_qry);
+
+		//echo $id_texture1;
+		if ($optcomments != "")
+		{
+			$newid = "OptC" . $id_texture1;
+			$sql_insert_comment1 = "INSERT INTO next_trans_cmtt_table(Comments,TransId,CommentedBy) VALUES ('$optcomments	','$newid',$personId_session)";
+			mysqli_query($db, $sql_insert_comment1);
+		}
+		echo "<div class='alert alert-success'>
+				<strong>$optiondesc</strong> Successfully Added!!!.
+				</div>";		
+	} else {
+		echo "<div class='alert alert-danger'>
+			<strong>$optiondesc</strong> Already Exists!!!.
 			</div>";
+	}
+
 }
 if ($process == "delete_row" && $del_id != "")
 {

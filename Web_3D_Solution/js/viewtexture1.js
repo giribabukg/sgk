@@ -133,6 +133,8 @@ function validateForm() {
 		alert("Please select Status");
 		return false;
 	}
+	$("#addtexture1").submit();
+	//document.getElementById("addtexture1").submit();
 }
 
 // function validateForm() {
