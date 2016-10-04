@@ -1,0 +1,218 @@
+DELIMITER $$
+
+USE `nextdb`$$
+
+DROP PROCEDURE IF EXISTS `testbrief`$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `testbrief`(
+ IN pid VARCHAR(50),
+ IN season_id INT,
+ IN category_id INT,
+ OUT out_param VARCHAR(10))
+BEGIN
+	
+	DECLARE LID INT;
+	DECLARE shape_start VARCHAR(100);
+	DECLARE foot_start VARCHAR(100);
+	DECLARE fabric_start VARCHAR(100);
+	DECLARE opt_code VARCHAR(100);
+	DECLARE done INT;
+	DECLARE opt_flag INT;
+	DECLARE rec_count INT DEFAULT 0;
+	DECLARE ids INT;
+	DECLARE angle_set INT;
+	DECLARE mat_id INT;
+	DECLARE rangeval VARCHAR(255);
+	DECLARE swatch_item VARCHAR(100);
+	DECLARE sts VARCHAR(25);
+	DECLARE seasonval VARCHAR(255);
+	DECLARE seasonvals VARCHAR(255);
+	DECLARE categoryval VARCHAR(255);
+	DECLARE categoryvals VARCHAR(255);
+	DECLARE phaseval VARCHAR(255);
+	DECLARE volnewness INT;
+	DECLARE volexis INT;
+	DECLARE totalvol INT;
+	DECLARE season_val VARCHAR(100);
+	DECLARE count1 INT;
+	DECLARE count2 INT;
+	DECLARE wrap INT;
+	DECLARE db_range_id VARCHAR(100);
+	DECLARE opt_state INT;
+	DECLARE bd_detail VARCHAR(500);
+	DECLARE detail_code_count INT;
+	DECLARE temp_msg VARCHAR(500);
+	DECLARE detail_code VARCHAR(500);
+	DECLARE model_id VARCHAR(500);
+	DECLARE foot_shape_code VARCHAR(500);
+	DECLARE foot_shape_code_count INT;
+	DECLARE ft_type VARCHAR(500);
+	DECLARE wrap_detail VARCHAR(500);
+	DECLARE temp_wrap VARCHAR(500);
+	DECLARE wrap_code VARCHAR(500);
+	DECLARE stdwrap INT;
+	DECLARE altwrap1 INT; 
+	DECLARE altwrap2 INT; 
+	DECLARE altwrap3 INT; 
+	DECLARE i INT;
+	DECLARE model_count INT;
+	DECLARE model_matched_status INT;
+	DECLARE r_id INT;
+	DECLARE done1 INT DEFAULT 0;
+	DECLARE looprange INT;
+	DECLARE tot_count INT;
+	DECLARE state_name VARCHAR(500);
+	DECLARE error_count VARCHAR(5);
+	DECLARE foot_color_count INT;
+	DECLARE ft_color VARCHAR(500);
+	DECLARE error_flag INT;
+	DECLARE wrap_code_count INT;
+	DECLARE model_error_flag INT;
+	DECLARE optid VARCHAR(11);
+	DECLARE size_desc VARCHAR(300);
+	DECLARE opt_sgkid VARCHAR(10);
+	DECLARE text1 INT;
+	DECLARE text2 INT;
+	
+	
+	#DECLARE cur2 CURSOR FOR SELECT range_id FROM next_main_matched_entry WHERE phase_id=pid GROUP BY range_id;
+	
+	DECLARE cur1 CURSOR FOR
+		SELECT id,shape_start_phase,foot_start_phase,fabric_start_phase,sofa_range,swatch_item_number,six_two_six,option_code,bed_detail,foot_type,foot_colour,size_descrption FROM next_main_upload_temp WHERE phaseid = pid;
+	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done =1;
+		
+	SET done =0;
+	
+	INSERT INTO proced_status(pro_phase,season_id,running_status,start_time) VALUES(pid,season_id,'started',NOW());
+	SET LID = LAST_INSERT_ID();
+	SELECT DataName INTO season_val FROM next_master_data_detail WHERE id=season_id;	
+	
+	OPEN cur1;
+		igmLoop: LOOP	
+		
+			FETCH cur1 INTO ids,shape_start,foot_start,fabric_start,rangeval,swatch_item,sts,opt_code,bd_detail,ft_type,ft_color,size_desc;
+			IF done =1 THEN LEAVE igmLoop; END IF;
+			
+			#UPDATE next_main_upload_temp SET temp=concat(shape_start,'__',season_val) WHERE id=ids;
+			
+			IF shape_start = season_val THEN
+				UPDATE next_main_upload_temp SET start_match_status=1,match_field=1 WHERE id=ids;
+			ELSEIF foot_start = season_val THEN
+				UPDATE next_main_upload_temp SET start_match_status=1,match_field=2 WHERE id=ids;
+			ELSEIF fabric_start = season_val THEN
+				UPDATE next_main_upload_temp SET start_match_status=1,match_field=3 WHERE id=ids;
+			ELSE
+				#next loop
+				SET temp_msg =  "Selected Season not matched in either shape_start_phase, foot_start_phase, fabric_start_phase";
+				UPDATE next_main_upload_temp SET temp=temp_msg WHERE id=ids;
+				ITERATE igmLoop;
+			END IF;
+			
+			SET opt_flag = 0;
+			SET rec_count =0;
+			SET error_count=0;
+			SET temp_msg = "";
+			SET error_flag=0;
+			#find material type
+			SELECT COUNT(id) INTO count1 FROM next_texture_lookup_table WHERE Texture_Item_No=swatch_item AND Season=season_id AND Category=category_id;
+			IF count1=0 THEN
+				SET temp_msg = CONCAT(temp_msg,"Item Number not found in the Texture1 lookup");
+				SET error_count = error_count + 1;
+				SET error_flag=1;
+				UPDATE next_main_upload_temp SET item_number_error=1 WHERE id=ids;
+			END IF;
+			#find angle set
+			SELECT COUNT(id) INTO count2 FROM next_range_lookup_table WHERE Range_desc=rangeval AND Category=category_id;
+			IF count2=0 THEN
+				SET temp_msg = CONCAT(temp_msg,", Range not found in the Range lookup");
+				SET error_count = error_count + 1;
+				SET error_flag=1;
+				UPDATE next_main_upload_temp SET range_error=1 WHERE id=ids;
+			END IF;
+			SELECT COUNT(dataname) INTO detail_code_count FROM next_master_data_detail a, next_master_header_detail b WHERE a.headerid = b.id AND a.Description = bd_detail AND b.HeaderName = 'Detail Code';
+			IF detail_code_count=0 THEN
+				SET temp_msg = CONCAT(temp_msg,", Detail code not found in the lookup");
+				SET error_count = error_count + 1;
+				SET error_flag=1;
+				UPDATE next_main_upload_temp SET detail_code_error=1 WHERE id=ids;
+			END IF;
+			SELECT COUNT(dataname) INTO foot_shape_code_count FROM next_master_data_detail a, next_master_header_detail b WHERE a.headerid = b.id AND a.Description = ft_type AND b.HeaderName = 'Foot Shape LUT';
+			IF foot_shape_code_count=0 THEN
+				SET temp_msg = CONCAT(temp_msg,", Foot type not found in the lookup");
+				SET error_count = error_count + 1;
+				SET error_flag=1;
+				UPDATE next_main_upload_temp SET foot_type_error=1 WHERE id=ids;
+			END IF;
+			SELECT COUNT(id) INTO foot_color_count FROM next_texturesec_lookup_table WHERE Texture_Color=ft_color AND Season=season_id AND Category=category_id;
+			IF foot_color_count=0 THEN
+				SET temp_msg = CONCAT(temp_msg,", Foot colour not found in the Texture2 lookup");
+				SET error_count = error_count + 1;
+				UPDATE next_main_upload_temp SET foot_color_error=1 WHERE id=ids;
+				SET error_flag=1;
+			END IF;
+			
+			IF error_flag=1 THEN
+				UPDATE next_main_upload_temp SET temp=temp_msg,total_error_count=error_count,main_error=1 WHERE id=ids;
+				ITERATE igmLoop;
+			END IF;
+			
+			SELECT id,MaterialType,StdWrapCode,AltWrapCode1,AltWrapCode2,AltWrapCode3 INTO text1,mat_id,stdwrap,altwrap1,altwrap2,altwrap3 FROM next_texture_lookup_table WHERE Texture_Item_No=swatch_item AND Season=season_id AND Category=category_id;
+			SELECT id INTO text2 FROM next_texturesec_lookup_table WHERE Texture_Color=ft_color AND Season=season_id AND Category=category_id;
+			SELECT id,range_id,Angle_set_Option INTO r_id,db_range_id,angle_set FROM next_range_lookup_table WHERE Range_desc=rangeval AND Category=category_id LIMIT 1;			
+			
+			SELECT COUNT(id) INTO rec_count FROM next_option_lookup_table WHERE Description = size_desc AND AngleSet=angle_set AND Category=category_id;
+			IF rec_count = 0 THEN
+				SET temp_msg = CONCAT(temp_msg,", Option code not found in the Option lookup");
+				SET error_count = error_count + 1;
+				UPDATE next_main_upload_temp SET temp=temp_msg,option_code_error=1,total_error_count = error_count,main_error=1 WHERE id=ids;
+				ITERATE igmLoop;
+			END IF;
+			SET opt_flag = 1;
+			
+			SELECT dataname INTO detail_code FROM next_master_data_detail a, next_master_header_detail b WHERE a.headerid = b.id AND a.Description = bd_detail AND b.HeaderName = 'Detail Code';
+			SELECT dataname INTO foot_shape_code FROM next_master_data_detail a, next_master_header_detail b WHERE a.headerid = b.id AND a.Description = ft_type AND b.HeaderName = 'Foot Shape LUT';
+			#loop start
+			SET i=0;
+			SET model_error_flag=0;
+			WHILE i<rec_count DO 
+				#generate model							
+				SELECT id,State,WrapCode_Option,option_sgkid INTO optid,opt_state,wrap,opt_sgkid FROM next_option_lookup_table WHERE Description = size_desc AND AngleSet=angle_set AND Category=category_id LIMIT i,1;
+				SELECT dataname INTO wrap_detail FROM next_master_data_detail a, next_master_header_detail b WHERE a.headerid = b.id AND a.id = wrap AND b.HeaderName = 'Wrapcode Option';
+				SELECT dataname INTO state_name FROM next_master_data_detail a, next_master_header_detail b WHERE a.headerid = b.id AND a.id = opt_state AND b.HeaderName = 'State LUT';
+							
+				IF wrap_detail ="STANDARD" THEN
+					SET temp_wrap = stdwrap;
+				ELSEIF wrap_detail ="Alt Wrap 1" THEN
+					SET temp_wrap = altwrap1;
+				ELSEIF wrap_detail ="Alt Wrap 2" THEN
+					SET temp_wrap = altwrap2;
+				ELSEIF wrap_detail ="Alt Wrap 3" THEN
+					SET temp_wrap = altwrap3;								
+				END IF;
+				SELECT dataname INTO wrap_code FROM next_master_data_detail a, next_master_header_detail b WHERE a.headerid = b.id AND a.id = temp_wrap AND b.HeaderName = 'Wrapcode LUT';				
+				SET model_id = CONCAT(db_range_id,"_",opt_sgkid,"_",state_name,"_",detail_code,"_",foot_shape_code,"_",wrap_code);
+				#UPDATE next_main_upload_temp SET model=model_id WHERE id=ids;
+				SELECT COUNT(model_id) INTO model_count FROM model_lookup WHERE model_name=model_id AND mod_category=category_id;
+				SET model_matched_status = 0;
+				
+				IF model_count>0 THEN
+					SET model_matched_status=1;
+					INSERT INTO next_main_matched_entry (temp_id, phase_id, source_model,matched_status,range_id,state_code,option_id,texture1id,texture2id) VALUES (ids, pid, model_id,model_matched_status,r_id,opt_state,optid,text1,text2);
+				ELSE
+					SET error_count = error_count + 1;
+					SET model_error_flag=1;
+					INSERT INTO next_main_matched_entry (temp_id, phase_id, source_model,matched_status,range_id,state_code,temp,option_id,texture1id,texture2id) VALUES (ids, pid, model_id,model_matched_status,r_id,opt_state,"Model not found in the Model lookup",optid,text1, text2);
+				END IF;
+				SET i = i + 1;
+				#loop end
+			END WHILE;
+			UPDATE next_main_upload_temp SET option_no_of_rows=rec_count, option_match_status=opt_flag, model_error=model_error_flag,temp=temp_msg,total_error_count=error_count  WHERE id=ids;
+		END LOOP igmLoop;
+	CLOSE cur1;
+	
+	#loop end
+	UPDATE proced_status SET running_status='completed', end_time=NOW() WHERE status_id=LID;
+	SET out_param = "success";	
+    END$$
+
+DELIMITER ;

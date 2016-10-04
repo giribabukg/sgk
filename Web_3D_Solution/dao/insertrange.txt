@@ -1,0 +1,111 @@
+DELIMITER $$
+
+USE `nextdb`$$
+
+DROP PROCEDURE IF EXISTS `insertrange`$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `insertrange`(
+ IN pid VARCHAR(50),
+ OUT out_param VARCHAR(10))
+BEGIN
+	
+	DECLARE LID INT;
+	DECLARE shape_start VARCHAR(100);
+	DECLARE foot_start VARCHAR(100);
+	DECLARE fabric_start VARCHAR(100);
+	DECLARE opt_code VARCHAR(100);
+	DECLARE done INT;
+	DECLARE opt_flag INT;
+	DECLARE rec_count INT DEFAULT 0;
+	DECLARE ids INT;
+	DECLARE angle_set INT;
+	DECLARE mat_id INT;
+	DECLARE rangeval VARCHAR(255);
+	DECLARE swatch_item VARCHAR(100);
+	DECLARE sts VARCHAR(25);
+	DECLARE seasonval VARCHAR(255);
+	DECLARE seasonvals VARCHAR(255);
+	DECLARE categoryval VARCHAR(255);
+	DECLARE categoryvals VARCHAR(255);
+	DECLARE phaseval VARCHAR(255);
+	DECLARE volnewness INT;
+	DECLARE volexis INT;
+	DECLARE totalvol INT;
+	DECLARE season_val VARCHAR(100);
+	DECLARE count1 INT;
+	DECLARE count2 INT;
+	DECLARE wrap INT;
+	DECLARE db_range_id VARCHAR(100);
+	DECLARE opt_state INT;
+	DECLARE bd_detail VARCHAR(500);
+	DECLARE detail_code_count INT;
+	DECLARE temp_msg VARCHAR(500);
+	DECLARE detail_code VARCHAR(500);
+	DECLARE model_id VARCHAR(500);
+	DECLARE foot_shape_code VARCHAR(500);
+	DECLARE foot_shape_code_count INT;
+	DECLARE ft_type VARCHAR(500);
+	DECLARE wrap_detail VARCHAR(500);
+	DECLARE temp_wrap VARCHAR(500);
+	DECLARE wrap_code VARCHAR(500);
+	DECLARE stdwrap INT;
+	DECLARE altwrap1 INT; 
+	DECLARE altwrap2 INT; 
+	DECLARE altwrap3 INT; 
+	DECLARE i INT;
+	DECLARE model_count INT;
+	DECLARE model_matched_status INT;
+	DECLARE r_id INT;
+	DECLARE done1 INT DEFAULT 0;
+	DECLARE looprange INT;
+	DECLARE tot_count INT;
+	DECLARE state_name VARCHAR(500);
+	DECLARE render_count VARCHAR(100);
+	
+	DECLARE cur2 CURSOR FOR SELECT range_id FROM next_main_matched_entry WHERE phase_id=pid AND matched_status=1 GROUP BY range_id;
+	
+		
+	SET done =0;
+	
+	#INSERT INTO proced_status(pro_phase,season_id,running_status,start_time) VALUES(pid,season_id,'started',NOW());
+	#SET LID = LAST_INSERT_ID();
+	
+	#loop start
+	OPEN cur2;
+	read_loop: LOOP
+		FETCH cur2 INTO looprange;
+		IF done THEN
+			LEAVE read_loop;
+		END IF;
+		SELECT COUNT(tid) INTO volnewness FROM next_main_matched_entry WHERE phase_id = pid AND matched_status=0 AND range_id=looprange;
+		SELECT COUNT(tid) INTO render_count FROM next_main_matched_entry WHERE phase_id = pid AND matched_status=1 AND batchid IS NULL AND model_status=1 AND fabric_status=1 AND feet_color_status=1 AND range_id=looprange;
+		SELECT COUNT(tid) INTO volexis  FROM next_main_matched_entry WHERE phase_id = pid AND matched_status=1 AND batchid IS NULL AND range_id=looprange;
+		SELECT COUNT(tid) INTO tot_count FROM next_main_matched_entry WHERE phase_id = pid AND batchid IS NULL AND range_id=looprange;
+		SELECT DISTINCT seasonId,categoryiD INTO seasonval,categoryval 
+		FROM next_main_phase_table WHERE PhaseId = pid;
+		
+		SELECT dataname INTO  seasonvals 
+		FROM next_master_data_detail a,
+		next_master_header_detail b
+		WHERE a.headerid = b.id
+		AND a.id = seasonval
+		AND b.HeaderName = 'Season';
+		
+		SELECT dataname INTO  categoryvals
+		FROM next_master_data_detail a,
+		next_master_header_detail b 
+		WHERE a.headerid = b.id
+		AND a.id = categoryval
+		AND b.HeaderName = 'Category';
+		
+		SET totalvol = volexis + volnewness;
+		SET phaseval = CONCAT(seasonvals,' ',categoryvals);
+			INSERT INTO next_range_overview_table (phaseval,rangeval,rendervol,completed,PhaseId, range_status, ready_to_render_count) VALUES (phaseval,looprange,volexis,'0',pid,2, render_count);
+	END LOOP;
+	CLOSE cur2;
+	#loop end
+	#UPDATE proced_status SET running_status='completed', end_time=NOW() WHERE status_id=LID;
+	SET out_param = "success";	
+    END$$
+
+DELIMITER ;

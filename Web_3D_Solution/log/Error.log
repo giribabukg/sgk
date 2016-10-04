@@ -1,0 +1,29 @@
+26102015111016 => Error: Unable to process with the request. 
+ Error ID26102015111016. by [Gunasilan - System Profile Id (00001)]
+26102015111013 => Error: Unable to process with the request. 
+ Error ID26102015111013. by [Gunasilan - System Profile Id (00001)]
+26102015111048 => Error: Unable to process with the request. 
+ Error ID26102015111048. by [Gunasilan - System Profile Id (00001)]
+26102015111055 => Error: Unable to process with the request. 
+ Error ID26102015111055. by [Gunasilan - System Profile Id (00001)]
+29102015041022 => Error: [29102015041022].29-10-2015 04:32:22:session_start(): open(C:\Windows\TEMP\sess_g4q1fmf5t8d0tfdj6c4migvae5, O_RDWR) failed: Permission denied (13)
+24112015121124 => Error: [24112015121124].24-11-2015 12:25:24:rename() expects parameter 3 to be resource, string given by [Gunasilan - System Profile Id (00001)]
+24112015121104 => Error: [24112015121104].24-11-2015 12:29:04:rename() expects at most 3 parameters, 4 given by [Gunasilan - System Profile Id (00001)]
+24112015121139 => Error: [24112015121139].24-11-2015 12:46:39:rename(../brief/phaseupload/CORE_Role Mapping_Wave2_test2.xlsx,../brief/phaseupload/PH00007application/vnd.openxmlformats-officedocument.spreadsheetml.sheet): The system cannot find the path specified. (code: 3) by [Gunasilan - System Profile Id (00001)]
+25112015111137 => Error: [25112015111137].25-11-2015 11:42:37:Cannot modify header information - headers already sent by (output started at E:\Next3D\NextWeb\dao\briefupload.php:215) by [Gunasilan - System Profile Id (00001)]
+25112015111158 => Error: [25112015111158].25-11-2015 11:42:58:Cannot modify header information - headers already sent by (output started at E:\Next3D\NextWeb\dao\briefupload.php:215) by [Gunasilan - System Profile Id (00001)]
+25112015031101 => Error: [25112015031101].25-11-2015 03:03:01:Cannot modify header information - headers already sent by (output started at E:\Next3D\NextWeb\dao\briefupload.php:216) by [Gunasilan - System Profile Id (00001)]
+25112015031132 => Error: [25112015031132].25-11-2015 03:52:32:Cannot modify header information - headers already sent by (output started at E:\Next3D\NextWeb\dao\briefupload.php:217) by [Gunasilan - System Profile Id (00001)]
+25112015041104 => Error: [25112015041104].25-11-2015 04:22:04:Cannot modify header information - headers already sent by (output started at E:\Next3D\NextWeb\dao\briefupload.php:270) by [Gunasilan - System Profile Id (00001)]
+14122015051233 => Error: [14122015051233].14-12-2015 05:48:33:ldap_bind(): Unable to bind to server: Invalid credentials
+21122015111231 => Error: Unable to process with the request. 
+ Error ID21122015111231. by [Gunasilan - System Profile Id (00001)]
+21122015031213 => Error: Unable to process with the request. 
+ Error ID21122015031213. by [Gunasilan - System Profile Id (00001)]
+24052016120519 => Error: [24052016120519].24-05-2016 12:46:19:mysqli::mysqli(): (HY000/1045): Access denied for user 'root'@'localhost' (using password: YES)
+24052016120519 => Error: [24052016120519].24-05-2016 12:46:19:mysqli_real_escape_string() expects parameter 1 to be mysqli, null given
+24052016120515 => Error: [24052016120515].24-05-2016 12:47:15:mysqli::mysqli(): (HY000/1045): Access denied for user 'root'@'localhost' (using password: YES)
+24052016120521 => Error: [24052016120521].24-05-2016 12:47:21:mysqli::mysqli(): (HY000/1045): Access denied for user 'root'@'localhost' (using password: YES)
+24052016120531 => Error: [24052016120531].24-05-2016 12:47:31:mysqli::mysqli(): (HY000/1045): Access denied for user 'root'@'localhost' (using password: YES)
+24052016120531 => Error: [24052016120531].24-05-2016 12:47:31:mysqli_real_escape_string() expects parameter 1 to be mysqli, null given
+24052016120508 => Error: [24052016120508].24-05-2016 12:50:08:ldap_bind() expects parameter 1 to be resource, null given
