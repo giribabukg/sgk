@@ -464,4 +464,14 @@ if (!isset($login_session))
 {
 	header("Location: ../index.php");
 }
+
+define('FABRIC','Fabric');
+define('FOOT_COLOR','Foot Color');
+define('RANGE','Range');
+define('FOOT_TYPE','Foot Type');
+define('DETAIL_CODE','Detail Code');
+define('OPTION_CODE','Option Code');
+
+
+
 ?>

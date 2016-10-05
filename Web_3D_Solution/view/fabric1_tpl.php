@@ -6,6 +6,7 @@
 			<div class="panel-body">
 					<div class="dataTable_wrapper">
 						<a href="javascript:void(0);" class="btn btn-default btn-sm" onclick="update_texture1()" style="margin-bottom: 15px;"><span class="glyphicon glyphicon-ok"></span> Update</a>
+						<a href="javascript:void(0);" class="btn btn-default btn-sm" onclick="delRec_FinalNew('<?php echo FABRIC; ?>')" style="margin-bottom: 15px;"><span class="glyphicon glyphicon-ok"></span> Delete</a>
 						<table class="table table-condensed table-striped table-bordered table-hover nowrap" id="dataTables-example">
 							<thead>
 								<tr style="font-size: 10px;">

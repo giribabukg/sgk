@@ -394,3 +394,39 @@ function update_model()
 	$("#model_frm").submit();
 }
 
+function delRec_FinalNew(process){
+	if(process == ''){
+		return false;
+	}
+	var tempid = "";
+	var delObj = {};
+	var isRowChecked = false;
+	var isValidatePass = true;
+	$("input:checkbox[name=single_checkbox]:checked").each(function () {
+		isRowChecked = true;
+		tempid = $(this).attr("id");
+		if ($("#comment_" + tempid).val() == "") {
+			alert("Please enter comment in row " + tempid + "!!!");
+			isValidatePass = false;
+			return false;
+		}
+		delObj[tempid] = {comment:$("#comment_" + tempid).val()};
+	});
+	if (isRowChecked !== true) {
+		alert("Please select atleast one Row!!!");
+		return false;
+	}
+
+	if (isRowChecked === true && isValidatePass === true) {
+		$.ajax({
+		   type: "POST",
+		   data: {delData:delObj, process:process},
+		   url: "../dao/ajax_process.php",
+		   success: function(msg){
+		   	console.log(msg);
+		     //$('.answer').html(msg);
+		   }
+		});
+	}
+}
+

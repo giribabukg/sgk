@@ -1,0 +1,137 @@
+Finalize Newness:
+- Upload excel.
+- Check whether Material Type column in excel is available in master table. if available we taking id of that value.
+	- Inserting all records in temp table whome material type is available in master table.
+
+- After inserting temp table.
+	- Checking 5 LUT tables. Texture1 (Fabric item/Swatch Item), Texture2 (Foot color), Range LUT (Range Name), Foot type (Master tbl 'Foot Shape LUT'), Bed detail (Master tbl 'Detail Code')
+	- When LUT checkup over, we look at option lookup table for records.
+		Range name's angle set and Size description, we check at option lUT table, if records found, we generate model for them and then insert into main matched entry table.
+
+	- Before inserting model in main matched entry table,
+		- We need toc check whether model is available in model LUT table. If model available model matched will be set 1.
+		- Whether that available model is approved or not. We set that in model_status
+		- And whether Fabric status (texture1) is approved. This set in Fabric status.
+		- And whether Foot color status (texture2) is approved. This set in feet color status.
+
+- After inserting in main matched entry table, (after completion of testbrief procedure), we trigger insert range procedure.
+	- In that we insert record in Range overview table.  Here we show records by range wise.
+
+	- For insert, 
+		- First we require no of ranges available in main matched entry table for model matched status should be 1. We get that using group by query for current phase.
+		
+		- Then for each range, we take count of ready to render. For that model_status, model_matched statu, fabric status, feet clor status as 1. If these are set 1, those are ready to render.
+
+		- We will take matched status count for the range in main matched entry table. If count available only, we will insert in range overview table.
+
+		- Before inserting, we check whether already record available in range overview table for that range with status of 1,2,21 (Ready to render, WIP, System)
+			- If no rec available, we will insert new record with status of 2 (WIP)
+			- If available, we just update count for that record.
+
+
+
+
+
+
+Finalize Newness:
+Delete option for:
+	Fabric 1
+	Fabric 2
+	Range
+	Option
+	Model
+	Detail Code
+	Foot Type
+
+
+
+Finalize Newness:
+Common:
+- Get temp ids of selected checkbox in each page (whether Fabric/Foot Color/Range/Option/Model/Detail Code/Foot Type)
+- Here for
+	- Fabric, Foot Color, Range, Option, Detail Code, Foot type (6), we have check for related records (like One fabric need to be deleted, i need to delete those fabrics in temp table. Temp table may contain multiple records for same fabric)
+	- For model only, we check main matched entry table. For approved records only, we generate model, so wont delete model. It is deferred.
+- check for the record in temp table.
+	- For range, we will get temp_id of the range, For foot color, we get temp id of foot color.
+	- So If we are going to delete record for Range, we have to take all range column in excel and delete them all. This is same for all.
+
+- get those record from temp table and insert them in new tble deletd_finlz_newnes_temp and for model deletd_finlz_newnes_mainMatched
+
+
+
+- For Model only, we have to check at main matched entry table.
+
+Algo 2:
+- On each click on above heading, form submitted in sampe page (finalize_newness.php) with hidden value process='fabric1/fabric2/option/range/model/detail_code' etc.
+- With form value of process, include php file for each above option.  For fabric1 fabric1_tbl.php etc.
+- When click Update button included php file, js function called to check validation of checkbox selected and then submit a form in that include file.  That form has hidden value.  So form will be submitted to finalize_newness.php.
+	- Here using filter_input(), we extract value for process, if process='upd_txt1', then we again extract value INPUT_POST using filter_input() and insert those in table.
+
+
+	- Actually through JS, we take every checked checkboxes values (i.e. its all fields in its checkbox selected throug Jquery), and concatenate them, each field seperated by $$$$ and store that each row in an array.  Then we convert that array into string by joining |||| and then we set that string in a hidden field of form. that form will be taken in finalize_newness.php page for insertion purpose.
+
+
+Algo 3:
+- Put Delete button in fabric1_tbl.php file
+	- Onclick of the Delete button call new js function (duplicate update_texture1 function)
+		- Same as the code available as it is and submit the code to finalize newness page.
+		- Here in js I have to set new hidden value/or use already available hidden value process as 'del_text1' on the fly. Bcoz already hard coded fabric1_tbl page. That value i need to change as delete on the fly when doing delete.
+
+		- I here additionally, I will set 
+
+- When I get form details in finalize newness page.
+	- i put new function as php function called delete_texture1
+
+Algo 4:
+- Put delete button in fabric_tbl.php file
+- call JS function delRec_FinalizNewness(). In which i pass, 'processFor' string following string will pass for each
+		- Fabric 		(Texture 1 tbl, field swatch_item_number), 
+		- Foot Color, 	(Texture 2 tbl),
+		- Range, 		(Range LUT tbl),
+		- Option, 		(Option LUT tbl),
+		- Model, 		(main matched tbl),
+		- Detail Code, 	(Master tbl),
+		- Foot type 	(Master tbl),
+
+		Fabric 			swatch_item_number	swatch_item_number							item_number_error
+		Foot color 		foot color 			foot_color									foot_color_error
+		Range 			range name 			sofa_range									range_error
+		Option 			size_description 	size_description							option_code_error
+		Model 								source_model (in main matched entry tbl.    
+											and field matched_status is 0.)
+		Detail Code 	bed detail 			'Detail Code' in header tbl and in master 	detail_code_error		
+		Foot type 		foot_type			foot_type 									foot_type_error	
+
+	- When clicking Delete button validate is any checkbox is checked and also validate is comments given.
+	- Get select checkbox ids (temp id of temp table is stored here).
+	- Post those 
+		- ids
+		- processFor string 
+	- After completion in php file, reply message.
+	- Display those message in alert box.
+
+
+Algo 5:
+	in php file
+		- Get those ids, and processFor string
+			- if processFor string is Fabric
+				- With the temp ids we got, check in temp table.
+				- For Fabric, if we choose one Fabric
+					one id will come,  if I query the table for that i will get Swatch Number Item.  There may be multiple record with same sawtch.
+				- Get total records using swatch no.
+				- Insert those records in del table.
+				- then delete record from temp table.
+
+		- For Model,
+			- we will get main matched entry table's auto inc id (tid).  We skip model deletion option. Bcoz if we delete models in main matched entry table, it will be created again when testbrief procedure run (it will be run every finalize newness submission). To avoid creating again, we have to delete records in option lookup table for its range's angleset and size desc.  But we do not touch LUT tables as it is required for other sceniarios (like for other model generation something like that).  So deleting model is deferred.
+
+
+Algo 6:
+
+
+
+
+
+
+
+
