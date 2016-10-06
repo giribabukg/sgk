@@ -34,7 +34,7 @@ if ($process == "upd_text1")
 		if (!in_array($res_set["PhaseId"], $phase_array))
 			$phase_array[] = $phaseid . "__" . $textseson . "__" . $textcat;
 
-		$dup_qry = "SELECT COUNT(id) as text1 FROM next_texture_lookup_table WHERE Texture_Item_No='$item_number'";
+		$dup_qry = "SELECT COUNT(id) as text1 FROM next_texture_lookup_table WHERE Texture_Item_No='$item_number' and Category='".$textcat."'";
 		$dup_qry = mysqli_query($db, $dup_qry);
 		$dup_qry_row = mysqli_fetch_array($dup_qry, MYSQLI_ASSOC);
 		$text1_count = $dup_qry_row["text1"];
@@ -89,7 +89,7 @@ if ($process == "upd_text1")
 		if (!in_array($res_set["PhaseId"], $phase_array))
 			$phase_array[] = $phaseid . "__" . $textseson . "__" . $textcat;
 
-		$dup_qry = "SELECT COUNT(id) as text1 FROM next_texturesec_lookup_table WHERE Texture_Color='$item_foot_color'";
+		$dup_qry = "SELECT COUNT(id) as text1 FROM next_texturesec_lookup_table WHERE Texture_Color='$item_foot_color' and Category='".$textcat."'";
 		$dup_qry = mysqli_query($db, $dup_qry);
 		$dup_qry_row = mysqli_fetch_array($dup_qry, MYSQLI_ASSOC);
 		$text1_count = $dup_qry_row["text1"];
@@ -148,7 +148,7 @@ if ($process == "upd_text1")
 		if (!in_array($res_set["PhaseId"], $phase_array))
 			$phase_array[] = $phaseid . "__" . $textseson . "__" . $textcat;
 
-		$dup_qry = "SELECT COUNT(id) as text1 FROM next_range_lookup_table WHERE Range_desc='$sofa_range'";
+		$dup_qry = "SELECT COUNT(id) as text1 FROM next_range_lookup_table WHERE Range_desc='$sofa_range' and Category='".$textcat."'";
 		$dup_qry = mysqli_query($db, $dup_qry);
 		$dup_qry_row = mysqli_fetch_array($dup_qry, MYSQLI_ASSOC);
 		$text1_count = $dup_qry_row["text1"];
@@ -501,7 +501,19 @@ if ($process == "upd_text1")
 			</div>";
 }
 ?>
-
+<?php  if(!empty($_REQUEST) && isset($_REQUEST['msg'])){ 
+	$msgg = '';
+	if($_REQUEST['msg'] == 1){
+		$msgg = 'Deleted successfully.';
+	} else {
+		$msgg = 'Cannot delete the records successfully.';
+	}
+?>
+	<div class="alert alert-info ">
+	    <a href="#" class="close" data-dismiss="alert">&times;</a>
+	    <strong>Message : </strong><?php echo $msgg; ?>
+	</div>
+<?php } ?>
 <div class="row">
 	<div class="col-lg-12">
 		<h1 class="page-header">Finalize Newness</h1>

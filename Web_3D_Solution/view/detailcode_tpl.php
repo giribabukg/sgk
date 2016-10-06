@@ -6,7 +6,9 @@
 			<div class="panel-body">
 				
 					<div class="dataTable_wrapper">
+						<div style="padding-bottom:10px;font-size:21px;font-weight: bold;">Detail Code</div>
 						<a href="javascript:void(0);" class="btn btn-default btn-sm" onclick="update_detailcode()" style="margin-bottom: 15px;"><span class="glyphicon glyphicon-ok"></span> Update</a>
+						<a href="javascript:void(0);" class="btn btn-default btn-sm" onclick="delRec_FinalNew('<?php echo FOOT_COLOR; ?>')" style="margin-bottom: 15px;margin-left: 10px;"><span class="glyphicon glyphicon-remove"></span> Delete</a>
 						<table class="table table-condensed table-striped table-bordered table-hover nowrap" id="dataTables-example">
 							<thead>
 								<tr style="font-size: 10px;">

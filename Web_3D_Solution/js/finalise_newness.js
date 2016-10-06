@@ -418,15 +418,26 @@ function delRec_FinalNew(process){
 	}
 
 	if (isRowChecked === true && isValidatePass === true) {
-		$.ajax({
-		   type: "POST",
-		   data: {delData:delObj, process:process},
-		   url: "../dao/ajax_process.php",
-		   success: function(msg){
-		   	console.log(msg);
-		     //$('.answer').html(msg);
-		   }
-		});
+		if(confirm("Are you sure? You really want to DELETE?")){
+			var loadIndic = '';
+			loadIndic = $('body').loadingIndicator();
+			//$('#wrapper').fadeOut(1500);
+			$.ajax({
+			   type: "POST",
+			   data: {delData:delObj, process:process},
+			   url: "../dao/ajax_process.php",
+			   success: function(msg){
+			   		//$('#wrapper').fadeIn();
+		   		// console.log(msg);
+			   		if(msg == 'done successfully'){
+			   			window.location = 'finalise_newness.php?msg=1';
+			   		} else {
+			   			window.location = 'finalise_newness.php?msg=0';
+			   		}
+			     //$('.answer').html(msg);
+			   }
+			});
+		}
 	}
 }
 

@@ -6,6 +6,7 @@
 			<div class="panel-body">
 				
 					<div class="dataTable_wrapper">
+						<div style="padding-bottom:10px;font-size:21px;font-weight: bold;">Foot Type</div>
 						<a href="javascript:void(0);" class="btn btn-default btn-sm" onclick="update_foottype()" style="margin-bottom: 15px;"><span class="glyphicon glyphicon-ok"></span> Update</a>
 						<table class="table table-condensed table-striped table-bordered table-hover nowrap" id="dataTables-example">
 							<thead>

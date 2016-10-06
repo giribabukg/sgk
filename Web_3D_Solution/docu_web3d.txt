@@ -127,7 +127,7 @@ Algo 5:
 
 
 Algo 6:
-
+	- It is came to know that when deleting records, we need to include category. i.e when taking delIds, we need to include category for FABRIC, Range, Foot Color, AND Option
 
 
 

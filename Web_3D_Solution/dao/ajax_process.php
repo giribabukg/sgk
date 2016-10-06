@@ -44,7 +44,7 @@ if ($process == "load_range")
 {
 	$obj->load_rangeoverview($db);
 }
-if ($process == FABRIC)
+if ($process == FABRIC || $process == FOOT_COLOR || $process == RANGE || $process == OPTION_CODE)
 {
 	$obj->delete_finalize_newness($db);
 }
@@ -634,7 +634,7 @@ class ajax_process
 			echo json_encode($formatted_array);
 		}
 	}
-	private function bkup_delete_in_temp_tbl($db,$tempId, $delRefLastInsId){
+	public static function bkup_delete_in_temp_tbl($db,$tempId, $delRefLastInsId){
 		if($tempId != '' && $delRefLastInsId != ''){
 			$qryChkTempTbl = "SELECT COUNT(1) FROM next_main_upload_temp WHERE id = ".$tempId ;
 			$resChkTempTbl = mysqli_query($db,$qryChkTempTbl);
@@ -645,7 +645,7 @@ class ajax_process
 				$BkupLastInsId = mysqli_insert_id($db);
 				$bkupAffRow = mysqli_affected_rows($db);
 				if($bkupAffRow == 1){
-					$qryUpdDelRef = "UPDATE del_ref_final_newn SET delbkup_id = $BkupLastInsId WHERE id = $delRefLastInsId";
+					$qryUpdDelRef = "UPDATE delbkup_next_main_upload_temp SET delref_id = $delRefLastInsId WHERE id = $BkupLastInsId";
 					$resUpdDelRef = mysqli_query($db,$qryUpdDelRef);
 					$rowAffUpdDelRef = mysqli_affected_rows($db);
 					if($rowAffUpdDelRef == 1){
@@ -671,38 +671,46 @@ class ajax_process
 			return false;
 		}
 	}
-	public static function getProcessDetail($db,$tid,$processName){
+	public static function getProcessDetailAndCatgry($db,$tid,$processName){
 		if($tid != '' && $processName !=''){
+			$procDet = array();
 			if($processName == FABRIC){
-				$qryProcName = "select swatch_item_number as process_name from next_main_upload_temp where id = $tid";
+				$qryProcName = "select swatch_item_number as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
 			} else if($processName == FOOT_COLOR){
-				$qryProcName = "select foot_color as process_name from next_main_upload_temp where id = $tid";
+				$qryProcName = "select foot_colour as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
 			} else if($processName == RANGE){
-				$qryProcName = "select sofa_range as process_name from next_main_upload_temp where id = $tid";
+				$qryProcName = "select sofa_range as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
 			} else if($processName == OPTION_CODE){
-				$qryProcName = "select size_description as process_name from next_main_upload_temp where id = $tid";
+				$qryProcName = "select size_description as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
 			} //else if($processName == FOOT_TYPE){
 		//		$qryProcName = "select swatch_item_number as process_name from next_main_upload_temp where id = $tid";
 		//	} else if($processName == DETAIL_CODE){
 		//		$qryProcName = "select swatch_item_number as process_name from next_main_upload_temp where id = $tid";
 		//	}
+//			echo '$qryProcName......'.$qryProcName;
 
 			$resProcName = mysqli_query($db, $qryProcName);
-			$rowProcName = mysqli_fetch_array($resProcName);
-			$procDet = $rowProcName['process_name'];
+			
+			$AffRowProcName = mysqli_affected_rows($db);
+			if($AffRowProcName == 1){
+				$rowProcName = mysqli_fetch_array($resProcName);
+				$procDet['processName'] = $rowProcName['process_name'];
+				$procDet['category_id'] = $rowProcName['categoryId'];
+				$procDet['phase_id'] = $rowProcName['phaseid'];
+			} 
 			return $procDet;
 		}
 	}
 	public static function getQryToDeleteIds($procDetail,$processName){
-		if($procDetail != '' && $processName !=''){
+		if(count($procDetail) == 3 && $processName !=''){
 			if($processName == FABRIC){
-				$qryIdToDel = "select id from next_main_upload_temp where swatch_item_number = '$procDetail' and total_error_count>0 and item_number_error=1";
+				$qryIdToDel = "select a.id from next_main_upload_temp a, next_main_phase_table b where a.swatch_item_number = '".$procDetail['processName']."' and b.categoryId = '".$procDetail['category_id']."' and a.total_error_count>0 and a.item_number_error=1";
 			} else if($processName == FOOT_COLOR){
-				$qryIdToDel = "select id from next_main_upload_temp where foot_color = '$procDetail' and total_error_count>0 and foot_color_error=1";
+				$qryIdToDel = "select a.id from next_main_upload_temp where foot_colour = '$procDetail' and total_error_count>0 and foot_color_error=1";
 			} else if($processName == RANGE){
-				$qryIdToDel = "select id from next_main_upload_temp where sofa_range = '$procDetail' and total_error_count>0 and range_error=1";
+				$qryIdToDel = "select a.id from next_main_upload_temp where sofa_range = '$procDetail' and total_error_count>0 and range_error=1";
 			} else if($processName == OPTION_CODE){
-				$qryIdToDel = "select id from next_main_upload_temp where size_description = '$procDetail' and total_error_count>0 and option_code_error=1";
+				$qryIdToDel = "select a.id from next_main_upload_temp where size_description = '$procDetail' and total_error_count>0 and option_code_error=1";
 			} //else if($processName == FOOT_TYPE){
 			//	$qryProcName = "select id from next_main_upload_temp where swatch_item_number = $procDetail";
 			//} else if($processName == DETAIL_CODE){
@@ -712,11 +720,16 @@ class ajax_process
 		}
 	}	
 	public function delete_finalize_newness($db){
+		$t = time();
+		$timelog = date("dmYhms", $t);
 		$userId = $_SESSION ['login_id'];
+		$username = $_SESSION ['user_name'];
 		$delData   = filter_input(INPUT_POST, 'delData', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
 		$processName = (string) filter_input(INPUT_POST, 'process');
 		
 		$noOfItemSelected = count($delData);
+//		echo '<pre>';
+//		print_r($delData);
 		if($noOfItemSelected > 0){
 
 //			$commSepItemIds = implode(',',array_keys($delData));
@@ -724,28 +737,63 @@ class ajax_process
 //			$resGetTempDet = mysqli_query($db, $qryGetTempDet);
 //			$noOfTempDet = mysqli_affected_rows($resGetTempDet);
 //			$procDetArr = array();
+			$allDone = 1;
+			$totDelCnt = 0;
 			foreach($delData as $tid => $comment){
-				$procDetail = self::getProcessDetail($db,$tid,$processName);
+				$procDetail = self::getProcessDetailAndCatgry($db,$tid,$processName);
 
+				// echo '<pre>';
+				// echo '$procDetail....';
+				// print_r($procDetail);
+				
 //				$procDetArr[] = $rowGetTempDet['swatch_item_number'];
-				if($procDetail != ''){
+				if(count($procDetail) == 3){
 
 					$qryForDelIds = self::getQryToDeleteIds($procDetail,$processName);
+//					echo $qryForDelIds;
 					$resForDelIds = mysqli_query($db,$qryForDelIds);
 					$AffRowForDelIds = mysqli_affected_rows($db); //we may get more records. i.e. no of affecting feed records from temp table taking here.
 
-					$qryInsDelRef = "INSERT INTO del_ref_final_newn (temp_id,process,process_details,no_of_feed,comments,user_id) values(".$tid.",".$processName.",".$procDetail.",".$AffRowForDelIds.",".$comment['comment'].",".$userId.")";
+					//echo '$AffRowForDelIds....'.$AffRowForDelIds;
+					$httpXforwFor = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : '';
+					$qryInsDelRef = "INSERT INTO del_ref_final_newn (temp_id,category_id,phase_id,process,process_details,no_of_feed,comments,user_id,REMOTE_ADDRESS,HTTP_X_FORWARDED_FOR,USER_AGENT) values(".$tid.",".$procDetail['category_id'].",'".$procDetail['phase_id']."','".$processName."','".$procDetail['processName']."',".$AffRowForDelIds.",'".$comment['comment']."',".$userId.",'".$_SERVER['REMOTE_ADDR']."','".$httpXforwFor."','".$_SERVER['HTTP_USER_AGENT']."')";
 					$resInsDelRef = mysqli_query($db,$qryInsDelRef);
 					$delRefLastInsId = mysqli_insert_id($db);					
 					$insAffRows = mysqli_affected_rows($db);
 
+
+					//echo $qryInsDelRef;
+
+					// echo '$insAffRows.....'.$insAffRows;
+					// echo '$AffRowForDelIds.....'.$AffRowForDelIds;
 					if($AffRowForDelIds > 0 && $insAffRows == 1){
-						while($rowForDelIds = mysqli_fetch_array($resForDelIds)){
+//						echo '<pre>';
+//						print_r($idsToDelArr);						
+						while($rowForDelIds = mysqli_fetch_array($resForDelIds)) {
+//							echo '<pre>';
+//							print_r($rowForDelIds);
 							//Here $tid is temp_id of temp table for which we choose to delete in page. For this tid only we take its processName i.e. fabric/range/option etc. From that we take how many records are going to affect in temp table and get those ids and delete them
-							self::bkup_delete_in_temp_tbl($db,$rowForDelIds['id'],$delRefLastInsId);
+							$isDone = self::bkup_delete_in_temp_tbl($db,$rowForDelIds['id'],$delRefLastInsId);
+							if(!$isDone){
+								$allDone = 0;
+								error_log($timelog . " => Error: [$tid - $processName] Bkup delete is problem with some records [$username - System Profile Id ($userId)]\n", 3, "../log/delete_final_newn.log");
+							} 
 						}
+						$totDelCnt = $totDelCnt + $AffRowForDelIds;
+					} else {
+						$allDone = 0;
+						error_log($timelog . " => Error: [$tid - $processName] Cannot get Feed row ids or cannot insert del ref tbl [$username - System Profile Id ($userId)]\n", 3, "../log/delete_final_newn.log");					
 					}
+				} else {
+					$allDone = 0;
+					error_log($timelog . " => Error: [$tid - $processName] Cannot get process detail for temp id [$username - System Profile Id ($userId)]\n", 3, "../log/delete_final_newn.log");					
 				}
+			}
+			if($allDone){
+				echo 'done successfully';
+				error_log($timelog . " => Success: [$tid - $processName] $totDelCnt Records deleted successfully for $noOfItemSelected temp id(s) and processName [$username - System Profile Id ($userId)]\n", 3, "../log/delete_final_newn.log");
+			} else {
+				echo 'not success';
 			}
 		}
 	} 
