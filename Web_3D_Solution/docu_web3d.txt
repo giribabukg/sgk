@@ -239,3 +239,21 @@ CREATE TABLE `delbkup_next_main_upload_temp` (
 
 
 CREATE TABLE `nextdb`.`del_ref_final_newn` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , `updated` TIMESTAMP on update CURRENT_TIMESTAMP NULL DEFAULT NULL , `temp_id` INT(11) NOT NULL , `category_id` INT(11) NOT NULL , `phase_id` VARCHAR(15) NOT NULL , `process` VARCHAR(50) NOT NULL , `process_details` VARCHAR(255) NOT NULL , `no_of_feed` INT(11) NOT NULL , `comments` VARCHAR(255) NOT NULL,  `user_id` INT(11) NOT NULL , `REMOTE_ADDRESS` VARCHAR(50) DEFAULT NULL, `HTTP_X_FORWARDED_FOR` VARCHAR(50) DEFAULT NULL , `USER_AGENT` VARCHAR(255) DEFAULT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;
+
+
+
+
+
+			if($processName == FABRIC){
+				$qryProcName = "select swatch_item_number as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == FOOT_COLOR){
+				$qryProcName = "select foot_colour as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == RANGE){
+				$qryProcName = "select sofa_range as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == OPTION_CODE){
+				$qryProcName = "select size_descrption as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == FOOT_TYPE){
+				$qryProcName = "select foot_type as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == DETAIL_CODE){
+				$qryProcName = "select bed_detail as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			}
