@@ -44,7 +44,7 @@ if ($process == "load_range")
 {
 	$obj->load_rangeoverview($db);
 }
-if ($process == FABRIC || $process == FOOT_COLOR || $process == RANGE || $process == OPTION_CODE)
+if ($process == FABRIC || $process == FOOT_COLOR || $process == RANGE || $process == OPTION_CODE || $process == FOOT_TYPE || $process == DETAIL_CODE)
 {
 	$obj->delete_finalize_newness($db);
 }
@@ -653,27 +653,29 @@ class ajax_process
 						$resDelTmpTbl = mysqli_query($db,$qryDelTmpTbl);
 						$affRowDelTmpTbl = mysqli_affected_rows($db);
 						if($affRowDelTmpTbl == 1){
-							return true;
+							return 1;
 						} else {
-							return false;
+							return 'Cannot delete from temp table.';
 						}
 					}
 
 				} else {
-					return false;
+					return 'Cannot insert in bkup tbl.';
 				}
 
 			} else {
-				return false;
+				return 'Given temp id is not available in temp table.';
 			}
 
 		} else {
-			return false;
+			return 'temp id and del ref last insert id not available.';
 		}
 	}
 	public static function getProcessDetailAndCatgry($db,$tid,$processName){
 		if($tid != '' && $processName !=''){
 			$procDet = array();
+
+			//Here in the query, we are using joint query with main phase table to get category id.
 			if($processName == FABRIC){
 				$qryProcName = "select swatch_item_number as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
 			} else if($processName == FOOT_COLOR){
@@ -681,12 +683,12 @@ class ajax_process
 			} else if($processName == RANGE){
 				$qryProcName = "select sofa_range as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
 			} else if($processName == OPTION_CODE){
-				$qryProcName = "select size_description as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
-			} //else if($processName == FOOT_TYPE){
-		//		$qryProcName = "select swatch_item_number as process_name from next_main_upload_temp where id = $tid";
-		//	} else if($processName == DETAIL_CODE){
-		//		$qryProcName = "select swatch_item_number as process_name from next_main_upload_temp where id = $tid";
-		//	}
+				$qryProcName = "select size_descrption as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == FOOT_TYPE){
+				$qryProcName = "select foot_type as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == DETAIL_CODE){
+				$qryProcName = "select bed_detail as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			}
 //			echo '$qryProcName......'.$qryProcName;
 
 			$resProcName = mysqli_query($db, $qryProcName);
@@ -703,19 +705,21 @@ class ajax_process
 	}
 	public static function getQryToDeleteIds($procDetail,$processName){
 		if(count($procDetail) == 3 && $processName !=''){
+			$qryIdToDel = '';
 			if($processName == FABRIC){
 				$qryIdToDel = "select a.id from next_main_upload_temp a, next_main_phase_table b where a.swatch_item_number = '".$procDetail['processName']."' and b.categoryId = '".$procDetail['category_id']."' and a.total_error_count>0 and a.item_number_error=1";
 			} else if($processName == FOOT_COLOR){
-				$qryIdToDel = "select a.id from next_main_upload_temp where foot_colour = '$procDetail' and total_error_count>0 and foot_color_error=1";
+				$qryIdToDel = "select a.id from next_main_upload_temp a, next_main_phase_table b where foot_colour = '".$procDetail['processName']."' and b.categoryId = '".$procDetail['category_id']."' and a.total_error_count>0 and a.foot_color_error=1";
 			} else if($processName == RANGE){
-				$qryIdToDel = "select a.id from next_main_upload_temp where sofa_range = '$procDetail' and total_error_count>0 and range_error=1";
+				$qryIdToDel = "select a.id from next_main_upload_temp a, next_main_phase_table b where sofa_range = '".$procDetail['processName']."' and b.categoryId = '".$procDetail['category_id']."' and a.total_error_count>0 and a.range_error=1";
 			} else if($processName == OPTION_CODE){
-				$qryIdToDel = "select a.id from next_main_upload_temp where size_description = '$procDetail' and total_error_count>0 and option_code_error=1";
-			} //else if($processName == FOOT_TYPE){
-			//	$qryProcName = "select id from next_main_upload_temp where swatch_item_number = $procDetail";
-			//} else if($processName == DETAIL_CODE){
-			//	$qryProcName = "select id from next_main_upload_temp where swatch_item_number = $procDetail";
-			//}
+				$qryIdToDel = "select a.id from next_main_upload_temp a, next_main_phase_table b where size_descrption = '".$procDetail['processName']."' and b.categoryId = '".$procDetail['category_id']."' and a.total_error_count>0 and a.option_code_error=1";
+			} else if($processName == FOOT_TYPE){
+				$qryIdToDel = "select a.id from next_main_upload_temp a, next_main_phase_table b where foot_type = '".$procDetail['processName']."' and b.categoryId = '".$procDetail['category_id']."' and a.total_error_count>0 and a.foot_type_error=1";
+			} else if($processName == DETAIL_CODE){
+				$qryIdToDel = "select a.id from next_main_upload_temp a, next_main_phase_table b where bed_detail = '".$procDetail['processName']."' and b.categoryId = '".$procDetail['category_id']."' and a.total_error_count>0 and a.detail_code_error=1";
+			}
+
 			return $qryIdToDel;
 		}
 	}	
@@ -728,15 +732,10 @@ class ajax_process
 		$processName = (string) filter_input(INPUT_POST, 'process');
 		
 		$noOfItemSelected = count($delData);
-//		echo '<pre>';
-//		print_r($delData);
+		// echo '<pre>';
+		// print_r($delData);
 		if($noOfItemSelected > 0){
 
-//			$commSepItemIds = implode(',',array_keys($delData));
-//			$qryGetTempDet = "select id, swatch_item_number from next_main_upload_temp where id in ($commSepItemIds)";
-//			$resGetTempDet = mysqli_query($db, $qryGetTempDet);
-//			$noOfTempDet = mysqli_affected_rows($resGetTempDet);
-//			$procDetArr = array();
 			$allDone = 1;
 			$totDelCnt = 0;
 			foreach($delData as $tid => $comment){
@@ -746,11 +745,10 @@ class ajax_process
 				// echo '$procDetail....';
 				// print_r($procDetail);
 				
-//				$procDetArr[] = $rowGetTempDet['swatch_item_number'];
 				if(count($procDetail) == 3){
 
 					$qryForDelIds = self::getQryToDeleteIds($procDetail,$processName);
-//					echo $qryForDelIds;
+					//echo $qryForDelIds;
 					$resForDelIds = mysqli_query($db,$qryForDelIds);
 					$AffRowForDelIds = mysqli_affected_rows($db); //we may get more records. i.e. no of affecting feed records from temp table taking here.
 
@@ -764,19 +762,20 @@ class ajax_process
 
 					//echo $qryInsDelRef;
 
-					// echo '$insAffRows.....'.$insAffRows;
-					// echo '$AffRowForDelIds.....'.$AffRowForDelIds;
+					  // echo '$insAffRows.....'.$insAffRows;
+					  // echo '$AffRowForDelIds.....'.$AffRowForDelIds;
 					if($AffRowForDelIds > 0 && $insAffRows == 1){
-//						echo '<pre>';
-//						print_r($idsToDelArr);						
+					
 						while($rowForDelIds = mysqli_fetch_array($resForDelIds)) {
 //							echo '<pre>';
 //							print_r($rowForDelIds);
 							//Here $tid is temp_id of temp table for which we choose to delete in page. For this tid only we take its processName i.e. fabric/range/option etc. From that we take how many records are going to affect in temp table and get those ids and delete them
 							$isDone = self::bkup_delete_in_temp_tbl($db,$rowForDelIds['id'],$delRefLastInsId);
-							if(!$isDone){
+							$idDel = $rowForDelIds['id'];
+							//echo '$isDone......'.$isDone ;
+							if($isDone !== 1){
 								$allDone = 0;
-								error_log($timelog . " => Error: [$tid - $processName] Bkup delete is problem with some records [$username - System Profile Id ($userId)]\n", 3, "../log/delete_final_newn.log");
+								error_log($timelog . " => Error: [$tid - $idDel - $processName] Bkup delete is problem with some records [$username - System Profile Id ($userId)]\n", 3, "../log/delete_final_newn.log");
 							} 
 						}
 						$totDelCnt = $totDelCnt + $AffRowForDelIds;
@@ -797,7 +796,6 @@ class ajax_process
 			}
 		}
 	} 
-
 }
 
 ?>

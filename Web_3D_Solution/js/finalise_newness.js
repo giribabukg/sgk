@@ -410,7 +410,12 @@ function delRec_FinalNew(process){
 			isValidatePass = false;
 			return false;
 		}
-		delObj[tempid] = {comment:$("#comment_" + tempid).val()};
+		var $comnt = ''
+		if($("#comment_" + tempid).val()){
+			$comnt = $("#comment_" + tempid).val();
+		}
+
+		delObj[tempid] = {comment:$comnt};
 	});
 	if (isRowChecked !== true) {
 		alert("Please select atleast one Row!!!");
@@ -427,8 +432,9 @@ function delRec_FinalNew(process){
 			   data: {delData:delObj, process:process},
 			   url: "../dao/ajax_process.php",
 			   success: function(msg){
+			   		//loadIndic.hide();
 			   		//$('#wrapper').fadeIn();
-		   		// console.log(msg);
+		   		  // console.log(msg);
 			   		if(msg == 'done successfully'){
 			   			window.location = 'finalise_newness.php?msg=1';
 			   		} else {
