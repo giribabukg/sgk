@@ -1,0 +1,259 @@
+Issue Exists:
+Brief:
+1. In finalize newness page duplicate check cat id not included
+2. In finalize newnness page listing, cat id not included 
+3. In Finalize newness page top counting also wrong. We have to include category id in the count query also.
+
+Explained:
+- in finalize newness page,
+	1. when taking count for duplicate check, cat id not included. It is wrong. Because same item_no/range/foot color/option may already available for other category.  Now cat id included.
+	2. In same finalize newness page, we are taking the lists to display in this page which we have to add to the lookup table.
+		- Here also cat id not considered. Just take item_no/range/foot color/option from temp table by grouping them in query. so if there are more than one item_no/range/foot color/option with differen cat id, that would not be listed here (actually there would be more than one item_no/range/foot color/option for diff cat id, bcoz we check in testbrief procedure with cat id and if that not available in LUT, then only we mark them as error. so while listing also we have to show them with diff cat id)
+	3. Bcoz, No of item for each item_no/range/foot color/option in the top count should match no of item listing below. So we have to include category id also at top count taking.
+
+Enhancements:
+- category_id included in temp table.
+- For that included category_id, 'value add' code included in briefupload.php
+
+
+
+Finalize Newness:
+- Upload excel.
+- Check whether Material Type column in excel is available in master table. if available we taking id of that value.
+	- Inserting all records in temp table whome material type is available in master table.
+
+- After inserting temp table.
+	- Checking 5 LUT tables. Texture1 (Fabric item/Swatch Item), Texture2 (Foot color), Range LUT (Range Name), Foot type (Master tbl 'Foot Shape LUT'), Bed detail (Master tbl 'Detail Code')
+	- When LUT checkup over, we look at option lookup table for records.
+		Range name's angle set and Size description, we check at option lUT table, if records found, we generate model for them and then insert into main matched entry table.
+
+	- Before inserting model in main matched entry table,
+		- We need toc check whether model is available in model LUT table. If model available model matched will be set 1.
+		- Whether that available model is approved or not. We set that in model_status
+		- And whether Fabric status (texture1) is approved. This set in Fabric status.
+		- And whether Foot color status (texture2) is approved. This set in feet color status.
+
+- After inserting in main matched entry table, (after completion of testbrief procedure), we trigger insert range procedure.
+	- In that we insert record in Range overview table.  Here we show records by range wise.
+
+	- For insert, 
+		- First we require no of ranges available in main matched entry table for model matched status should be 1. We get that using group by query for current phase.
+		
+		- Then for each range, we take count of ready to render. For that model_status, model_matched statu, fabric status, feet clor status as 1. If these are set 1, those are ready to render.
+
+		- We will take matched status count for the range in main matched entry table. If count available only, we will insert in range overview table.
+
+		- Before inserting, we check whether already record available in range overview table for that range with status of 1,2,21 (Ready to render, WIP, System)
+			- If no rec available, we will insert new record with status of 2 (WIP)
+			- If available, we just update count for that record.
+
+
+
+
+
+
+Finalize Newness:
+Delete option for:
+	Fabric 1
+	Fabric 2
+	Range
+	Option
+	Model
+	Detail Code
+	Foot Type
+
+
+
+Finalize Newness:
+Common:
+- Get temp ids of selected checkbox in each page (whether Fabric/Foot Color/Range/Option/Model/Detail Code/Foot Type)
+- Here for
+	- Fabric, Foot Color, Range, Option, Detail Code, Foot type (6), we have check for related records (like One fabric need to be deleted, i need to delete those fabrics in temp table. Temp table may contain multiple records for same fabric)
+	- For model only, we check main matched entry table. For approved records only, we generate model, so wont delete model. It is deferred.
+- check for the record in temp table.
+	- For range, we will get temp_id of the range, For foot color, we get temp id of foot color.
+	- So If we are going to delete record for Range, we have to take all range column in excel and delete them all. This is same for all.
+- get those record from temp table and insert them in new tble deletd_finlz_newnes_temp and for model deletd_finlz_newnes_mainMatched
+
+- For Model only, we have to check at main matched entry table.
+
+Algo 2:
+- On each click on above heading, form submitted in sampe page (finalize_newness.php) with hidden value process='fabric1/fabric2/option/range/model/detail_code' etc.
+- With form value of process, include php file for each above option.  For fabric1 fabric1_tbl.php etc.
+- When click Update button included php file, js function called to check validation of checkbox selected and then submit a form in that include file.  That form has hidden value.  So form will be submitted to finalize_newness.php.
+	- Here using filter_input(), we extract value for process, if process='upd_txt1', then we again extract value INPUT_POST using filter_input() and insert those in table.
+
+
+	- Actually through JS, we take every checked checkboxes values (i.e. its all fields in its checkbox selected throug Jquery), and concatenate them, each field seperated by $$$$ and store that each row in an array.  Then we convert that array into string by joining |||| and then we set that string in a hidden field of form. that form will be taken in finalize_newness.php page for insertion purpose.
+
+
+Algo 3:
+- Put Delete button in fabric1_tbl.php file
+	- Onclick of the Delete button call new js function (duplicate update_texture1 function)
+		- Same as the code available as it is and submit the code to finalize newness page.
+		- Here in js I have to set new hidden value/or use already available hidden value process as 'del_text1' on the fly. Bcoz already hard coded fabric1_tbl page. That value i need to change as delete on the fly when doing delete.
+
+		- I here additionally, I will set 
+
+- When I get form details in finalize newness page.
+	- i put new function as php function called delete_texture1
+
+Algo 4:
+- Put delete button in fabric_tbl.php file
+- call JS function delRec_FinalizNewness(). In which i pass, 'processFor' string following string will pass for each
+		- Fabric 		(Texture 1 tbl, field swatch_item_number), 
+		- Foot Color, 	(Texture 2 tbl),
+		- Range, 		(Range LUT tbl),
+		- Option, 		(Option LUT tbl),
+		- Model, 		(main matched tbl),
+		- Detail Code, 	(Master tbl),
+		- Foot type 	(Master tbl),
+
+		Fabric 			swatch_item_number	swatch_item_number							item_number_error
+		Foot color 		foot color 			foot_color									foot_color_error
+		Range 			range name 			sofa_range									range_error
+		Option 			size_description 	size_description							option_code_error
+		Model 								source_model (in main matched entry tbl.    
+											and field matched_status is 0.)
+		Detail Code 	bed detail 			'Detail Code' in header tbl and in master 	detail_code_error		
+		Foot type 		foot_type			foot_type 									foot_type_error	
+
+	- When clicking Delete button validate is any checkbox is checked and also validate is comments given.
+	- Get select checkbox ids (temp id of temp table is stored here).
+	- Post those 
+		- ids
+		- processFor string 
+	- After completion in php file, reply message.
+	- Display those message in alert box.
+
+
+Algo 5:
+	in php file
+		- Get those ids, and processFor string
+			- if processFor string is Fabric
+				- With the temp ids we got, check in temp table.
+				- For Fabric, if we choose one Fabric
+					one id will come,  if I query the table for that i will get Swatch Number Item.  There may be multiple record with same sawtch.
+				- Get total records using swatch no.
+				- Insert those records in del table.
+				- then delete record from temp table.
+
+		- For Model,
+			- we will get main matched entry table's auto inc id (tid).  We skip model deletion option. Bcoz if we delete models in main matched entry table, it will be created again when testbrief procedure run (it will be run every finalize newness submission). To avoid creating again, we have to delete records in option lookup table for its range's angleset and size desc.  But we do not touch LUT tables as it is required for other sceniarios (like for other model generation something like that).  So deleting model is deferred.
+
+
+Algo 6:
+	- It is came to know that when deleting records, we need to include category. i.e when taking delIds, we need to include category for FABRIC, Range, Foot Color, AND Option
+
+To Delete Foot Type and Bead Detail
+	- In Testbrief procedure
+		- We take Foot Type and bed_detail column for checkup
+		- Foot Type and bed detail are text in excel file
+		- To check whether these are available in db
+			- have to take id from header table using 
+				'Foot Shape LUT' for foot type
+				'Detail Code' for bed detail
+			- Then in master table we have to match the id with headerid to get values of foot type and bed detail
+				- Description column in master table will contain the value.
+	- What's happening when update in finalize newness page for Foot Type and Detail Code (Bead detail)
+		- we will take foot_type from temp table using temp id
+		- we will check 
+			- id for 'Foot Shape LUT' for Foot type
+			- id for 'Detail Code' for Bead Detail (bed_detail in excel)
+		- with that id and foot_type (value of temp table), we wil check whether record available in master table.
+			- If no, we will insert
+			- If yes, we say already exist.
+
+
+
+
+121586
+
+
+Delete in Finalize Newness Page:
+- This will delete record from temp table only.
+
+
+
+
+
+Querys:
+
+SELECT swatch_item_number,phaseid,count(1) FROM next_main_upload_temp WHERE total_error_count>0 AND item_number_error=1 GROUP BY swatch_item_number,phaseid order by swatch_item_number,phaseid
+
+
+select sum(tot_fab) as totFab from (SELECT count(1) as tot_fab FROM next_main_upload_temp WHERE total_error_count>0 AND item_number_error=1 GROUP BY swatch_item_number,phaseid order by swatch_item_number,phaseid) src
+
+
+
+
+
+CREATE TABLE `delbkup_next_main_upload_temp` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `delref_id` INT(11) DEFAULT NULL , 
+  `temp_id` int(11) NOT NULL,
+  `six_two_six` varchar(500) DEFAULT NULL,
+  `item_code` varchar(200) DEFAULT NULL,
+  `option_code` varchar(200) DEFAULT NULL,
+  `foot_pack` varchar(200) DEFAULT NULL,
+  `product_area` varchar(500) DEFAULT NULL,
+  `season` varchar(500) DEFAULT NULL,
+  `shape_start_phase` varchar(500) DEFAULT NULL,
+  `sofa_range` varchar(500) DEFAULT NULL,
+  `material_type` varchar(500) DEFAULT NULL,
+  `mat_type` int(11) DEFAULT NULL,
+  `size_range` varchar(500) DEFAULT NULL,
+  `size_descrption` varchar(500) DEFAULT NULL,
+  `swatch_item_number` varchar(500) DEFAULT NULL,
+  `swatch_item_fabric` varchar(500) DEFAULT NULL,
+  `swatch_item_fabric_colour` varchar(500) DEFAULT NULL,
+  `foot_start_phase` varchar(500) DEFAULT NULL,
+  `foot_type` varchar(500) DEFAULT NULL,
+  `foot_colour` varchar(500) DEFAULT NULL,
+  `chair_format` varchar(500) DEFAULT NULL,
+  `bed_detail` varchar(500) DEFAULT NULL,
+  `fabric_start_phase` varchar(500) DEFAULT NULL,
+  `pattern_match` varchar(500) DEFAULT NULL,
+  `piping` varchar(500) DEFAULT NULL,
+  `phaseid` varchar(500) DEFAULT NULL,
+  `start_match_status` int(1) DEFAULT '0',
+  `match_field` int(1) DEFAULT NULL COMMENT '1-shapestart; 2-fabricstart; 3-footstart;',
+  `option_match_status` int(1) DEFAULT '0',
+  `option_no_of_rows` int(11) DEFAULT '0',
+  `temp` text,
+  `model` varchar(500) DEFAULT NULL,
+  `item_number_error` int(1) DEFAULT '0' COMMENT '0 - no error; 1 - error',
+  `range_error` int(1) DEFAULT '0' COMMENT '0 - no error; 1 - error',
+  `detail_code_error` int(1) DEFAULT '0',
+  `foot_type_error` int(1) DEFAULT '0',
+  `foot_color_error` int(1) DEFAULT '0',
+  `option_code_error` int(1) DEFAULT '0',
+  `angle_set` int(1) DEFAULT '0',
+  `model_error` int(1) DEFAULT '0' COMMENT '0 - no error; 1 - error',
+  `total_error_count` int(5) DEFAULT '0',
+  `need_to_run` int(1) DEFAULT '1' COMMENT '1 - yes; 1 - no',
+  `last_updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+
+
+
+CREATE TABLE `nextdb`.`del_ref_final_newn` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , `updated` TIMESTAMP on update CURRENT_TIMESTAMP NULL DEFAULT NULL , `temp_id` INT(11) NOT NULL , `category_id` INT(11) NOT NULL , `phase_id` VARCHAR(15) NOT NULL , `process` VARCHAR(50) NOT NULL , `process_details` VARCHAR(255) NOT NULL , `no_of_feed` INT(11) NOT NULL , `comments` VARCHAR(255) NOT NULL,  `user_id` INT(11) NOT NULL , `REMOTE_ADDRESS` VARCHAR(50) DEFAULT NULL, `HTTP_X_FORWARDED_FOR` VARCHAR(50) DEFAULT NULL , `USER_AGENT` VARCHAR(255) DEFAULT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;
+
+
+
+
+
+			if($processName == FABRIC){
+				$qryProcName = "select swatch_item_number as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == FOOT_COLOR){
+				$qryProcName = "select foot_colour as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == RANGE){
+				$qryProcName = "select sofa_range as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == OPTION_CODE){
+				$qryProcName = "select size_descrption as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == FOOT_TYPE){
+				$qryProcName = "select foot_type as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			} else if($processName == DETAIL_CODE){
+				$qryProcName = "select bed_detail as process_name,categoryId,a.phaseid from next_main_upload_temp a, next_main_phase_table b where a.id = $tid and a.phaseid = b.PhaseId";
+			}
